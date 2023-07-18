@@ -2,6 +2,7 @@
 const http=require('http')
 const fs=require('fs')
 const { json } = require('stream/consumers')
+const { error } = require('console')
 
 
 // объявление переменных
@@ -89,25 +90,37 @@ fs.writeFileSync('comments.txt', JSON.stringify(usersComments))
 http.createServer(function(req, res){
    res.setHeader('Access-Control-Allow-Origin','*') //устранение корс ошибки, '*' - значит все порты
    res.writeHead(200, {'Content-Type': 'application/json'})
-   const url=req.url
-   if (req.method==='GET') {
-      if (url==='/photos'){
-         const arrObjPhotos=fs.readFileSync('photos.txt', 'utf-8')
-         res.write(arrObjPhotos)
-         res.end()
-      }
-      else if (url==='/comments') {
-            const arrObjComments=fs.readFileSync('comments.txt', 'utf-8')
-            res.write(arrObjComments)
-            res.end()
-         }
 
-
-      else {
-         res.write('wrong route')
-         res.end()
-      }
+   if (req.method==='GET'&& req.url==='/photos') {
+      
+      const arrObjPhotos=fs.readFileSync('photos.txt', 'utf-8')
+      res.write(arrObjPhotos)
+      res.end()
    }
-}).listen(4002,function() {
-   console.log('server start at port 4002')
-})
+   else if (req.method==='GET' && req.url==='/comments') {
+      const arrObjComments=fs.readFileSync('comments.txt', 'utf-8')
+      res.write(arrObjComments)
+      res.end()
+   }
+   else if (req.method==='POST' && req.url==='/dataForm') {
+   
+         let body=''
+         req.on('data',chunk=>{
+         body=body+chunk.toString()// чтение посылаемых данных кусочками
+
+      })
+   
+      req.on('end', ()=>{
+         
+            fs.writeFileSync('dataForm.txt', JSON.stringify(body))
+            res.write('данные успешно записаны в текстовый файл на сервере')
+            res.end()
+      })
+   } 
+   else {
+      
+      res.write(JSON.stringify('error: not_found_url'))
+      res.end()
+   }
+   
+}).listen(4002,function() {console.log('server start at port 4002')})
